@@ -1,26 +1,22 @@
-Postmortem Report
-504 Error while accessing a given URL
+Postmortem
 
-
-Incident report for 504 error / Site Outage
-Summary
-On September 11th, 2018 at midnight the server access went down resulting in 504 error for anyone trying to access a website. Background on the server being based on a LAMP stack.
-
+Issue Summary
+Close to the end of the years operations and when the Christmas celebrations were about to begin, on December 10–2019 at 12:00 am GMT-5, a series of issues where starting to be reported by users and thus a full on investigation of this bug was set finding it was affecting 100% of traffic to the container who reported a (52) Empty reply from server. The fix was expected by that same day before 11:00 pm GMT-5.
 Timeline
-00:00 PST - 500 error for anyone trying to access the website
-00:05 PST - Ensuring Apache and MySQL are up and running.
-00:10 PST - The website was not loading properly which on background check revealed that the server was working properly as well as the database.
-00:12 PST - After quick restart to Apache server returned a status of 200 and OK while trying to curl the website.
-00:18 PST - Reviewing error logs to check where the error might be coming from.
-00:25 PST - Check /var/log to see that the Apache server was being prematurely shut down. The error log for PHP were nowhere to be found.
-00:30 PST - Checking php.ini settings revealed all error logging had been turned off. Turning the error logging on.
-00:32 PST - Restarting apache server and going to the error logs to check what is being logged into the php error logs.
-00:36 PST - Reviewing error logs for php revealed a mistyped file name which was resulting in incorrect loading and premature closing of apache.
-00:38 PST - Fixing file name and restarting Apache server.
-00:40 PST - Server is now running normally and the website is loading properly.
-Root Cause and Resolution
-The issue was connected with a wrong file name being reffered to in the wp-settings.php file. The error was raised when trying to curl the server, wherein the server responded with 500 error. By checking the error logs it was found that no error log file was being created for the php errors and reading the default error log for apache did not result in much information regarding the premature closing of the server. Once understood that the errors for php logs were not being directed anywhere the engineer chose to review the error log setting for the php in the php.ini file and found that all error logging was turned off. Once turned on, the error logging the apache server was restarted to check if any errors were being registerd in the log. As suspected, the php log showed that a file with a .phpp extension was not found in the wp-settings.php file. This was clearly a misspelled error that resulted in the error to site access. As this was one server that the error was found in, this error might have been replicated in other servers as well. An easy fix by changing the file extension by puppet would result in the fix being made to other servers as well. A quick deployment of the puppet code replaced all misspelled file extensions with the right one and restarting of the server resulted in properly loading of the site and server.
+12–10–2019, 12:00 am GMT-5, first reports of issues started to arrive.
+12–10–2019, 1:00 am GMT-5, Team is alerted of the situation and is called to find a solution.
+12–10–2019, 9:00 am GMT-5, Devops team arrives on campus and start working on the issue.
+12–10–2019, 9:09 am GMT-5, the devops team was sad because we weren't going on vacation yet.
+9–12–2018, 1:00 pm GMT-5, After some reading and coffee, issue was identified. Apache was installed but never started.
+9–12–2018, 2:00 pm GMT-5, possible solutions are drafted.
+9–12–2018, 4:00 pm GMT-5, solution is found and code is uploaded to server.
+9–12–2018, 5:00 pm GMT-5, the situation is being monitored in case of further issues.
+9–12–2018, 6:00 pm GMT-5, Service is fully restored, no further issues reported (Finally people can use all the power of a container to type" Hello Holberton").
 
-Corrective and Preventive Measures
-All servers and sites should have error logging turned on to easily identify errors if anything goes wrong.
-All servers and sites should be tested locally before deploying on a multi-server setup this will result in correcting errors before going live resulting in less fixing time if site goes down.
+Root Cause
+One of the Devops team members was so excited about his vacations he installed Apache on the server but forgot to initilize it. User of the container where getting errors as they were not getting any answer from port 8080.
+Resolution and recovery
+After discovering the root cause, the following script was created to start the apache server:
+To test that the Apache was up and running curl 0:8080 was run and this time instead of the "curl: (52) Empty reply from server" error, Hello Holberton was returned as it was supposed to.
+Corrective and Preventative Measures
+This is a silly mistake as the only reason found for such an error is it was a human error. Before setting up a container it has to be tested and see if it is working, a check list could be of use from now on. Another recommendation would be to avoid giving any type of vacations to the devops team, it generates too many costly distractions.
